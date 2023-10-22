@@ -1,4 +1,6 @@
-module Year2016.Day1
+module AOC.Year2016.Day1
+
+open AOC
 
 exception private Error of string
 
@@ -91,10 +93,6 @@ let private strToMove (str: string) =
     { direction = str[0]
       distance = str[1..] |> int }
 
-
-let private inputToList (separator: char) (input: string) =
-    input.Split separator |> Seq.map (fun x -> x.Trim()) |> Seq.toList
-
 let private initialPosition = { x = 0; y = 0; direction = 'N' }
 
 let private flat list =
@@ -106,8 +104,7 @@ let private output distance =
     | None -> printfn "Could not find bunny hq!"
 
 let private partA =
-    inputToList ','
-    >> List.map strToMove
+    Input.mapToList strToMove ','
     >> List.scan doMove [ initialPosition ]
     >> flat
     >> List.tryLast
@@ -115,16 +112,13 @@ let private partA =
     >> Option.map getManhattanDistance
     >> output
 
-
 let private partB =
-    inputToList ','
-    >> List.map strToMove
+    Input.mapToList strToMove ','
     >> List.scan doMove [ initialPosition ]
     >> flat
     >> getFirstDuplicate positionsEqual
     >> Option.map (fun position -> (position.x, position.y))
     >> Option.map getManhattanDistance
     >> output
-
 
 let solution: Types.Solution = { partA = partA; partB = partB }

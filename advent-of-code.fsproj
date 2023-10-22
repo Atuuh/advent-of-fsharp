@@ -6,8 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="types.fs" />
-    <Compile Include="src\**\*.fs" />
-    <Compile Include="input.fs" />
+    <Compile Include="src\helpers\**\*.fs" />
+    <Compile Include="src\2016\**\*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

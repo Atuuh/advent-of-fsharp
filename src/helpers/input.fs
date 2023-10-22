@@ -1,4 +1,4 @@
-module Input
+module AOC.Input
 
 open System.IO
 
@@ -13,3 +13,9 @@ let getInput year day =
     with ex ->
         printfn $"Error getting input file for year {year} day {day}"
         reraise ()
+
+let toList (separator: char) (input: string) =
+    input.Split separator |> Seq.map (fun x -> x.Trim()) |> Seq.toList
+
+let mapToList mapFn separator input =
+    toList separator input |> List.map mapFn

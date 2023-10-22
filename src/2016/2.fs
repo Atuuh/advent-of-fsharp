@@ -1,8 +1,17 @@
-module Year2016.Day2
+module AOC.Year2016.Day2
+
+open AOC.String
+open AOC
 
 exception Error of string
 
-let move direction (position: int) =
+type Direction =
+    | U
+    | D
+    | L
+    | R
+
+let moveSimple direction (position: int) =
     match direction with
     | 'L' when List.contains position [ 1; 4; 7 ] -> position
     | 'L' -> position - 1
@@ -14,9 +23,35 @@ let move direction (position: int) =
     | 'D' -> position + 3
     | _ -> raise (Error("Direction is fucked!"))
 
+let moveComplex direction (position: int) =
+    match direction with
+    | 'L' when List.contains position [ 1; 2; 5; 0xA; 0xD ] -> position
+    | 'L' -> position - 1
+    | 'R' when List.contains position [ 1; 4; 9; 0xC; 0xD ] -> position
+    | 'R' -> position + 1
+    | 'U' when List.contains position [ 5; 2; 1; 4; 9 ] -> position
+    | 'U' -> if position = 3 then 1 else position - 4
+    | 'D' when List.contains position [ 5; 0xA; 0xD; 0xC; 9 ] -> position
+    | 'D' -> if position = 0xB then 1 else position + 4
+    | _ -> raise (Error("Direction is fucked!"))
+
+let doMoves moveFn startingPosition moves =
+    List.fold (fun position nextMove -> moveFn nextMove position) startingPosition moves
 
 
-let private partA = ignore
-let private partB = ignore
+let private partA =
+    Input.mapToList (fun x -> x.ToCharArray() |> Seq.toList) '\n'
+    >> List.map (doMoves moveSimple 5)
+    >> List.map (sprintf "%i")
+    >> String.concat ""
+    >> printfn "Code for the toilet is %s"
+
+let private partB =
+    Input.mapToList (fun x -> x.ToCharArray() |> Seq.toList) '\n'
+    >> List.map (doMoves moveComplex 5)
+    >> List.map (sprintf "%x")
+    >> String.concat ""
+    >> uppercase
+    >> printfn "Code for the toilet is %s"
 
 let solution: Types.Solution = { partA = partA; partB = partB }

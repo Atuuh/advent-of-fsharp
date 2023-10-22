@@ -1,4 +1,4 @@
-﻿module AOC
+﻿module AOC.Main
 
 let solutionsMap =
     Map(
