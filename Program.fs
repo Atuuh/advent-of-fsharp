@@ -5,7 +5,8 @@ let solutionsMap =
         [ (2016,
            Map[(1, Year2016.Day1.solution)
                (2, Year2016.Day2.solution)
-               (3, Year2016.Day3.solution)]) ]
+               (3, Year2016.Day3.solution)
+               (4, Year2016.Day4.solution)]) ]
     )
 
 let getArgs (args: string[]) =

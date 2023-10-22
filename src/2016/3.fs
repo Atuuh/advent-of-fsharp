@@ -4,12 +4,9 @@ open AOC
 open AOC.List
 
 type Triangle = int * int * int
+exception Error of string
 
 let isValidTriangle ((a, b, c): Triangle) = a + b > c && a + c > b && b + c > a
-
-let stringSplit (separator: char) (value: string) =
-    value.Split(separator, System.StringSplitOptions.RemoveEmptyEntries)
-    |> Seq.toList
 
 let stringTrim (value: string) = value.Trim()
 
@@ -26,16 +23,20 @@ let rec transpose xs =
           yield! transpose (List.map List.tail xs) ]
 
 let mapInputToTriangle: string list -> Triangle =
-    List.map int >> (fun (a: int list) -> (a[0], a[1], a[2]))
+    List.map int
+    >> (fun (items: int list) ->
+        match items with
+        | [ a; b; c ] -> a, b, c
+        | _ -> raise (Error("Not a list of 3 ints")))
 
 let partA =
-    Input.mapToList (stringSplit ' ' >> mapInputToTriangle) '\n'
+    Input.mapToList (String.split ' ' >> mapInputToTriangle) '\n'
     >> List.filter isValidTriangle
     >> List.length
     >> printfn "%i triangles are possible"
 
 let partB =
-    Input.mapToList (stringSplit ' ') '\n'
+    Input.mapToList (String.split ' ') '\n'
     >> List.chunkBySize 3
     >> List.map transpose
     >> flat
