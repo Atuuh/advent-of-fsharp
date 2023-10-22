@@ -1,6 +1,7 @@
 module AOC.Year2016.Day1
 
 open AOC
+open AOC.List
 
 exception private Error of string
 
@@ -94,9 +95,6 @@ let private strToMove (str: string) =
       distance = str[1..] |> int }
 
 let private initialPosition = { x = 0; y = 0; direction = 'N' }
-
-let private flat list =
-    List.fold (fun a b -> a @ b) List.empty list
 
 let private output distance =
     match distance with
