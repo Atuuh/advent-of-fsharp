@@ -14,14 +14,6 @@ let log a =
     printfn "%A" a
     a
 
-let rec transpose xs =
-    [ match xs with
-      | [] -> failwith "Cannot transpose a 0-by-n matrix"
-      | [] :: xs -> ()
-      | xs ->
-          yield List.map List.head xs
-          yield! transpose (List.map List.tail xs) ]
-
 let mapInputToTriangle: string list -> Triangle =
     List.map int
     >> (fun (items: int list) ->
