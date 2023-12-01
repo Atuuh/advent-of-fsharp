@@ -8,6 +8,7 @@
     <Compile Include="types.fs" />
     <Compile Include="src\helpers\**\*.fs" />
     <Compile Include="src\2016\**\*.fs" />
+    <Compile Include="src\2023\**\*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>
