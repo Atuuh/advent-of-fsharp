@@ -43,7 +43,7 @@ let private partA =
 let private partB =
     Input.toList '\n'
     >> Seq.map (
-        fun value -> [ getTextFirstNumber value; getTextLastNumber value ] // |> (Seq.map stringToNumber >> String.join ' '))
+        fun value -> [ getTextFirstNumber value; getTextLastNumber value ]
         >> Seq.map stringToNumber
         >> String.concat ""
         >> int
