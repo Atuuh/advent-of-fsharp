@@ -32,18 +32,22 @@ let stringToNumber value =
 
 let private partA =
     Input.toList '\n'
-    >> Seq.map (fun x -> [ getFirstNumber x; getLastNumber x ])
-    >> Seq.map (fun x -> String.Join("", x))
-    >> Seq.map int
+    >> Seq.map (
+        fun value -> [ getFirstNumber value; getLastNumber value ]
+        >> String.concat ""
+        >> int
+    )
     >> Seq.sum
     >> printfn "%i"
 
 let private partB =
     Input.toList '\n'
-    >> Seq.map (fun x -> [ getTextFirstNumber x; getTextLastNumber x ])
-    >> Seq.map (fun x -> Seq.map stringToNumber x)
-    >> Seq.map (fun x -> String.Join("", x))
-    >> Seq.map int
+    >> Seq.map (
+        fun value -> [ getTextFirstNumber value; getTextLastNumber value ] // |> (Seq.map stringToNumber >> String.join ' '))
+        >> Seq.map stringToNumber
+        >> String.concat ""
+        >> int
+    )
     >> Seq.sum
     >> printfn "%i"
 
