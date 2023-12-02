@@ -28,7 +28,7 @@ let parseInput value =
 let private partA =
     Input.toList '\n'
     >> Seq.map (parseInput >> (fun (id, revealed) -> (int id, getMaxColour revealed)))
-    >> Seq.filter (fun (_, count) -> hasAtleastRGB (12, 13, 14) count)
+    >> Seq.filterBy snd (hasAtleastRGB (12, 13, 14))
     >> Seq.map fst
     >> Seq.sum
     >> printfn "Winning game sums: %i"
