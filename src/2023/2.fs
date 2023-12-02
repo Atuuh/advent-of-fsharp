@@ -18,18 +18,16 @@ let getMaxColour value =
 
 let hasAtleastRGB (r1, g1, b1) (r2, g2, b2) = r1 >= r2 && g1 >= g2 && b1 >= b2
 
+let parseInput value =
+    let result = Regex("Game (\d+): (.*)").Match(value)
+
+    match Seq.toList result.Groups.Values with
+    | [ _; first; second ] -> (first.Value, second.Value)
+    | _ -> raise (ArgumentException "Oops")
+
 let private partA =
     Input.toList '\n'
-    >> Seq.map (
-        fun value ->
-            let result = Regex("Game (\d+): (.*)").Match(value)
-
-            match Seq.toList result.Groups.Values with
-            | [ _; first; second ] -> (first.Value, second.Value)
-            | _ -> raise (ArgumentException "Oops")
-
-        >> (fun (id, revealed) -> (int id, getMaxColour revealed))
-    )
+    >> Seq.map (parseInput >> (fun (id, revealed) -> (int id, getMaxColour revealed)))
     >> Seq.filter (fun (_, count) -> hasAtleastRGB (12, 13, 14) count)
     >> Seq.map fst
     >> Seq.sum
@@ -38,13 +36,7 @@ let private partA =
 let private partB =
     Input.toList '\n'
     >> Seq.map (
-        fun value ->
-            let result = Regex("Game (\d+): (.*)").Match(value)
-
-            match Seq.toList result.Groups.Values with
-            | [ _; first; second ] -> (first.Value, second.Value)
-            | _ -> raise (ArgumentException "Oops")
-
+        parseInput
         >> (fun (_, revealed) -> getMaxColour revealed)
         >> (fun (a, b, c) -> a * b * c)
     )
