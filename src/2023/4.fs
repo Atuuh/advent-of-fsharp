@@ -17,25 +17,14 @@ let parseInput input =
     | [ winningNumbers; numbers ] -> (id, winningNumbers, numbers)
     | _ -> raise (ArgumentException "Oops")
 
+let getWinningNumbers (id, winning, numbers) =
+    id, List.where (fun x -> List.contains x winning) numbers
+
 let private partA =
     Input.mapToList parseInput '\n'
-    >> List.map (
-        fun (id, winning, numbers) -> List.where (fun x -> List.contains x winning) numbers
-        >> fun x -> pown 2 (x.Length - 1)
-    )
+    >> List.map (getWinningNumbers >> fun numbers -> pown 2 (snd numbers |> List.length |> (-) 1))
     >> List.sum
     >> printfn "Total score: %i"
-
-let folder (cards: (int * int) list) ((cardId, points): int * int) : (int * int) list =
-    let cardCount = cards |> List.find (fst >> (=) cardId) |> snd
-    printfn "card %i cardCount %i" cardId cardCount
-
-    cards
-    |> List.map (fun (id, count) ->
-        if id > cardId && id <= cardId + points then
-            (id, count + cardCount)
-        else
-            (id, count))
 
 let getWinningCards (cards: (int * int) list) =
     List.fold
@@ -53,10 +42,7 @@ let getWinningCards (cards: (int * int) list) =
 
 let private partB =
     Input.mapToList parseInput '\n'
-    >> List.map (
-        fun (id, winning, numbers) -> id, List.where (fun x -> List.contains x winning) numbers
-        >> fun (id, numbers) -> id, numbers.Length
-    )
+    >> List.map (getWinningNumbers >> fun (id, numbers) -> id, numbers.Length)
     >> getWinningCards
     >> List.sumBy snd
     >> printfn "Stuff: %A"
