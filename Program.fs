@@ -1,11 +1,22 @@
 ﻿module AOC.Main
 
+open System.Diagnostics
+
 let getArgs (args: string[]) =
     try
         ((args[0] |> int), (args[1] |> int))
     with _ ->
         printfn "Failed getting arguments"
         exit 1
+
+
+let timeOperation func args =
+    let timer = new Stopwatch()
+    timer.Start()
+    let returnedValue = func args
+    timer.Stop()
+    printfn "Timer took %ims" timer.ElapsedMilliseconds
+    returnedValue
 
 [<EntryPoint>]
 let main args =
@@ -17,9 +28,9 @@ let main args =
     let input = Input.getInput year day
 
     printfn $"{year} Day {day} Part A"
-    solution.partA input
+    timeOperation solution.partA input
 
     printfn $"{year} Day {day} Part B"
-    solution.partB input
+    timeOperation solution.partB input
 
     0
