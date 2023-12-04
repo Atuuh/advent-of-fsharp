@@ -38,9 +38,18 @@ let folder (cards: (int * int) list) ((cardId, points): int * int) : (int * int)
             (id, count))
 
 let getWinningCards (cards: (int * int) list) =
-    let state = List.map (fun (id, _) -> id, 1) cards
-    printfn "getWinningCards state %A" state
-    List.fold folder state cards
+    List.fold
+        (fun cards (cardId, points) ->
+            let cardCount = cards |> List.find (fst >> (=) cardId) |> snd
+
+            cards
+            |> List.map (fun (id, count) ->
+                if id > cardId && id <= cardId + points then
+                    (id, count + cardCount)
+                else
+                    (id, count)))
+        (List.map (fun (id, _) -> id, 1) cards)
+        cards
 
 let private partB =
     Input.mapToList parseInput '\n'
