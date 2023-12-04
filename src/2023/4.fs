@@ -26,34 +26,30 @@ let private partA =
     >> List.sum
     >> printfn "Total score: %i"
 
+let folder (cards: (int * int) list) ((cardId, points): int * int) : (int * int) list =
+    let cardCount = cards |> List.find (fst >> (=) cardId) |> snd
+    printfn "card %i cardCount %i" cardId cardCount
 
-let getWinningCards (cards: (int * int list) list) =
-    let getCard id = List.find (fun (i, _) -> i = id) cards
-
-    let rec loop (remainingWinningCards: int list) (totalCards: int list) =
-        if List.isEmpty remainingWinningCards then
-            totalCards
+    cards
+    |> List.map (fun (id, count) ->
+        if id > cardId && id <= cardId + points then
+            (id, count + cardCount)
         else
-            let newWinningCards =
-                remainingWinningCards
-                |> List.collect (fun x ->
-                    let c = getCard x
-                    snd c)
+            (id, count))
 
-            loop newWinningCards (totalCards @ newWinningCards)
-
-    loop (List.map fst cards) (List.map fst cards)
+let getWinningCards (cards: (int * int) list) =
+    let state = List.map (fun (id, _) -> id, 1) cards
+    printfn "getWinningCards state %A" state
+    List.fold folder state cards
 
 let private partB =
     Input.mapToList parseInput '\n'
     >> List.map (
         fun (id, winning, numbers) -> id, List.where (fun x -> List.contains x winning) numbers
-        >> fun (id, numbers) -> id, [ id + 1 .. 1 .. id + numbers.Length ]
+        >> fun (id, numbers) -> id, numbers.Length
     )
     >> getWinningCards
-    // >> List.length
-    >> List.sort
-    >> List.length
+    >> List.sumBy snd
     >> printfn "Stuff: %A"
 
 let solution: Types.Solution = { partA = partA; partB = partB }
