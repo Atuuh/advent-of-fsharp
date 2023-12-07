@@ -60,14 +60,6 @@ let lookupTable (table: Table) (value: int64) : int64 =
             // printfn "Nothing to match\n"
             value)
 
-// let test i =
-//     printfn "Testing: %i -> %i\n\n" i (lookupTable [ (50, 98, 2); (52, 50, 48) ] i)
-
-// test 79
-// test 14
-// test 55
-// test 13
-
 let private partA =
     parseInput
     >> fun (seeds, tables) ->
@@ -84,26 +76,3 @@ let private partB = ignore
 
 
 let solution: Types.Solution = { partA = partA; partB = partB }
-
-(*
-    Seed to soil
-    50 98 2
-    52 50 48
-
-    Sorted by snd desc
-    50 98 2
-    52 50 48
-
-    Search for seed or lower
-    seed 79
-    -> 52 50 48
-
-
-    If snd >= seed and snd trd <= seed then
-        fst
-    else 
-        seed
-
-    79 14 55 13 -> 
-    81 14 57 13
-*)
