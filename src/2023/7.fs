@@ -77,7 +77,6 @@ let getCardPoints cardValueFn cards =
             cardValue * shift)
         cards
 
-
 let testes cardValueFn (cards, bid) =
     let handPoints = getHandPoints cards * 0x100000
 
@@ -111,17 +110,14 @@ let private partA =
 
 let getBonusHands cards =
     let cardTypes = List.distinct cards
-    // printfn ""
-    // printfn ""
-    // printfn "Starting Hand %A" cards
-    // printfn "Card Types: %A" cardTypes
+    let jokerCount = cards |> List.filter ((=) "J") |> List.length
 
     let rec loop hands fromIndex : string list list =
-        // printfn "Looping with %i hands" (List.length hands)
-        // printfn "Index %i" fromIndex
-
         if fromIndex >= 5 then
-            hands
+            if List.length hands <> (pown (List.length cardTypes) jokerCount) then
+                raise (System.ArgumentException "Got wrong amount of bonus hands")
+            else
+                hands
         else
             let bonusHands =
                 hands
@@ -132,7 +128,10 @@ let getBonusHands cards =
                         None)
                 |> List.collect id
 
-            loop (hands @ bonusHands) (fromIndex + 1)
+            if List.isEmpty bonusHands then
+                loop hands (fromIndex + 1)
+            else
+                loop (bonusHands) (fromIndex + 1)
 
     if List.contains "J" cardTypes then
         loop (List.singleton cards) 0
@@ -144,21 +143,15 @@ let private partB =
     >> List.map (fun (cards, bid) ->
         let bonusHands = cards |> getBonusHands
 
-        let allHands = (cards :: bonusHands) // |> List.map (fun hand -> hand, bid)
+        let allHands = (cards :: bonusHands)
 
-        // printfn "Cards %A" cards
-        // List.iter (printfn "Bonus Hand %A") bonusHands
+        let handScore = allHands |> List.map getHandPoints |> List.max |> (*) 0x100000
 
-        let handScore = allHands |> List.map (getHandPoints) |> List.max |> (*) 0x100000
         let cardScore = getCardPoints getCardValueWithJoker cards |> List.sum
 
-        // printfn "Hand (%A) has best score %X with bid %i" cards highestScore bid
 
         cards, handScore + cardScore, bid)
     >> List.sortBy snd3
-    >> fun xs ->
-        List.iter (fun (a, b, c) -> printfn "%s %X %i" (String.concat "" a) b c) xs
-        xs
     >> List.map thd3
     >> List.mapi (fun i bid -> (i + 1) * bid)
     >> List.sum
@@ -166,8 +159,3 @@ let private partB =
 
 
 let solution: Types.Solution = { partA = partA; partB = partB }
-
-printfn ""
-printfn ""
-printfn "Testing grounds"
-printfn ""
