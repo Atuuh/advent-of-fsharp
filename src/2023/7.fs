@@ -2,6 +2,7 @@ module AOC.Year2023.Day7
 
 open AOC
 open Day5
+open AOC.Tuple
 
 let log message a =
     printfn "%s: %A" message a

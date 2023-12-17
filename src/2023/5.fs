@@ -3,26 +3,60 @@ module AOC.Year2023.Day5
 open AOC
 open System
 
-type Table = (int64 * int64 * int64) list
+type Range = int64 * int64
+type Table = (Range * Range) list
 
-let fst3 (a, _, _) = a
-let snd3 (_, b, _) = b
-let thd3 (_, _, c) = c
+let intersectRange (a, al) (b, bl) =
+    if a <= b && a + al >= b + bl then
+        let lower = a, b - a
+        let overlap = b, bl
+        let upper = b + bl, (a + al) - (b + bl)
+        [ lower; upper ] |> List.filter (snd >> ((<>) 0L)), overlap
+    elif b <= a && b + bl >= a + al then
+        [], (a, al)
+    elif a < b && a + al < b + bl then
+        let lower = a, b - a
+        let overlap = b, a + al - b
+        [ lower ], overlap
+    elif a > b && a + al - 1L > b + bl - 1L then
+        let upper = b + bl, (a + al) - (b + bl)
+        let overlap = a, b + bl - a
+        [ upper ], overlap
+    else
+        raise (ArgumentException "Something dun fucked")
 
-let parseInput (value: string) : int64 list * Table list =
+let takeByI iFn =
+    Seq.mapi (fun i item -> if iFn i then Some item else None) >> Seq.choose id
+
+let isEven x = x % 2 = 0
+let isOdd x = x % 2 <> 0
+
+let getSeeds input : Range list =
+    input
+    |> ((String.split ':')
+        >> (Seq.item 1)
+        >> (String.split ' ')
+        >> (Seq.map int64)
+        >> Seq.map (fun x -> x, 1L)
+        >> List.ofSeq)
+
+let getSeedRanges input : Range list =
+    input
+    |> ((String.split ':')
+        >> (Seq.item 1)
+        >> (String.split ' ')
+        >> (Seq.map int64)
+        >> (fun xs -> Seq.zip (takeByI isEven xs) (takeByI isOdd xs))
+        >> List.ofSeq)
+
+let parseInput getSeedFn (value: string) =
     let liststs = value.Split("\n\n")
 
-    let seeds =
-        (Seq.head liststs)
-        |> ((String.split ':')
-            >> (Seq.item 1)
-            >> (String.split ' ')
-            >> (Seq.map int64)
-            >> List.ofSeq)
+    let seeds = getSeedFn (Seq.head liststs)
 
     let tables =
         (Seq.tail liststs)
-        |> (Seq.map (
+        |> (Seq.map<string, Table> (
                 String.split '\n'
                 >> Seq.tail
                 >> Seq.map (
@@ -31,48 +65,43 @@ let parseInput (value: string) : int64 list * Table list =
                         match xs with
                         | [ a; b; c ] -> int64 a, int64 b, int64 c
                         | _ -> raise (ArgumentException "Oopsie")
+                    >> (fun (a, b, c) -> (b, c), (a, c))
                 )
+                >> Seq.sortBy (fst >> fst)
                 >> List.ofSeq
             )
             >> List.ofSeq)
 
     (seeds, tables)
 
+let mapRangesAgainstTable ranges table =
+    let rec loop unmatchedRanges matchedRanges =
+        match unmatchedRanges with
+        | [] -> matchedRanges
+        | (a, al) :: tail ->
+            let mapping = List.tryFind (fun ((b, bl), _) -> a >= b && a <= b + bl - 1L) table
 
+            match mapping with
+            | None -> loop tail ((a, al) :: matchedRanges)
+            | Some((b, bl), (t, tl)) ->
+                let (newUnmatchedRanges, (m, ml)) = intersectRange (a, al) (b, bl)
+                let diff = m - b
+                loop (tail @ newUnmatchedRanges) ((t + diff, ml) :: matchedRanges)
 
-let lookupTable (table: Table) (value: int64) : int64 =
-    let sortedTable = table |> List.sortByDescending snd3
-    // printfn "Sorted: %A" sortedTable
-    let lookup = sortedTable |> List.tryFind (fun (a, b, c) -> b <= value)
-    // printfn "Lookup: %A" lookup
-
-    lookup
-    |> (fun opt ->
-        match opt with
-        | Some(a, b, c) ->
-            // printfn "Matching %i between %i and %i\n" value b (b + c)
-
-            if b <= value && b + c >= value then
-                a + (value - b)
-            else
-                value
-        | None ->
-            // printfn "Nothing to match\n"
-            value)
+    loop ranges []
 
 let private partA =
-    parseInput
-    >> fun (seeds, tables) ->
-        tables
-        |> List.fold
-            (fun newSeeds table ->
-                // printfn "%A" newSeeds
-                newSeeds |> List.map (lookupTable table))
-            seeds
+    parseInput getSeeds
+    >> (fun (seeds, tables) -> List.fold mapRangesAgainstTable seeds tables)
+    >> List.map fst
     >> List.min
-    >> printfn "%A"
+    >> printfn "Result: %i"
 
-let private partB = ignore
-
+let private partB =
+    parseInput getSeedRanges
+    >> (fun (seeds, tables) -> List.fold mapRangesAgainstTable seeds tables)
+    >> List.map fst
+    >> List.min
+    >> printfn "Result: %i"
 
 let solution: Types.Solution = { partA = partA; partB = partB }

@@ -2,6 +2,7 @@ module AOC.Year2023.Day8
 
 open AOC
 open AOC.String
+open System.Text.RegularExpressions
 
 let rec cycle xs =
     seq {
@@ -25,36 +26,49 @@ let parseInput (value: string) =
 
     directions, (Map.ofSeq map)
 
+let search map directions startingPosition =
+    let searchMap position = Map.find position map
+
+    directions
+    |> Seq.scan
+        (fun oldPositions direction ->
+            oldPositions
+            |> (fun (_, (left, right)) ->
+                match direction with
+                | "L" -> left, searchMap left
+                | "R" -> right, searchMap right))
+        startingPosition
+
 let private partA =
     parseInput
-    >> (fun (directions, map: Map<string, (string * string)>) ->
-        let mutable currentNode = "AAA", Map.find "AAA" map
-
-        let route =
-            directions
-            |> Seq.map (fun dir ->
-                let (currentPos, (left, right)) = currentNode
-
-                currentNode <-
-                    match dir with
-                    | "L" ->
-                        let _node = map |> Map.find left
-                        left, _node
-                    | "R" ->
-                        let _node = map |> Map.find right
-                        right, _node
-
-                    | _ -> raise (System.ArgumentException $"Couldn't match node {currentPos}")
-
-                currentNode)
-            |> Seq.takeWhile (fun (pos, _) -> pos <> "ZZZ")
-
-        Seq.append (Seq.singleton currentNode) route)
-
-    // >> Seq.iter (printfn "%A")
+    >> fun (directions, map) -> search map directions ("AAA", Map.find "AAA" map)
+    >> Seq.takeWhile (fun (x, _) -> x <> "ZZZ")
     >> Seq.length
     >> printfn "Result: %A"
 
-let private partB = ignore
+let primeDecomposition value =
+    let rec loop n x xs =
+        if n = x then x :: xs
+        else if n % x = 0 then loop (n / x) x (x :: xs)
+        else loop n (x + 1) xs
+
+    if value < 2 then List.empty else loop value 2 List.empty
+
+let lowestCommonMultiple =
+    List.collect (primeDecomposition >> List.map uint64 >> List.groupBy id)
+    >> List.groupBy fst
+    >> List.collect (snd >> List.maxBy (snd >> List.length) >> snd)
+    >> List.reduce (*)
+
+let private partB =
+    parseInput
+    >> (fun (directions, map) ->
+        let startingPositions =
+            map |> Map.filter (fun x _ -> Regex("..A").IsMatch(x)) |> Map.toList
+
+        startingPositions |> List.map (search map directions))
+    >> List.map (Seq.takeWhile (fun (x, _) -> (not <| Regex("..Z").IsMatch(x))) >> Seq.length)
+    >> lowestCommonMultiple
+    >> printfn "Result: %i"
 
 let solution: Types.Solution = { partA = partA; partB = partB }
