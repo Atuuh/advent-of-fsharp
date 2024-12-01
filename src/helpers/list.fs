@@ -12,3 +12,6 @@ let rec transpose xs =
       | xs ->
           yield List.map List.head xs
           yield! transpose (List.map List.tail xs) ]
+
+let getElementCountMap xs =
+    xs |> List.groupBy id |> List.map (fun (a, b) -> a, List.length b) |> Map.ofList
