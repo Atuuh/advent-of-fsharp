@@ -19,8 +19,8 @@ let getPassingDifferences report =
 let isSafe report =
     report |> getPassingDifferences |> List.forall ((=) true)
 
-let isSafeDampened originalReport =
-    let differences = getPassingDifferences originalReport
+let isSafeDampened report =
+    let differences = getPassingDifferences report
     let failures = differences |> List.filter ((=) false)
 
     match List.length failures with
@@ -29,8 +29,8 @@ let isSafeDampened originalReport =
     | 2 ->
         let failingIndex = differences |> List.findIndex ((=) false)
 
-        let left = originalReport |> List.removeAt failingIndex
-        let right = originalReport |> List.removeAt (failingIndex + 1)
+        let left = report |> List.removeAt failingIndex
+        let right = report |> List.removeAt (failingIndex + 1)
 
         isSafe left || isSafe right
     | _ -> false
