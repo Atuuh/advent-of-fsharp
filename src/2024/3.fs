@@ -12,7 +12,7 @@ let matchToMult (m: Match) =
     let groups = m.Groups |> List.ofSeq |> List.map (fun group -> group.Value)
 
     match groups with
-    | [ _; x; y ] -> m.Index, Mul(int x, int y)
+    | [ _; x; y ] -> Mul(int x, int y)
     | _ -> failwith (sprintf "Couldn't parse input, %A" groups)
 
 let parseCommand regex (mapping: Match -> Command) input =
@@ -21,18 +21,9 @@ let parseCommand regex (mapping: Match -> Command) input =
     |> List.map (fun m -> m.Index, mapping m)
 
 let getCommands input =
-    let mults =
-        Regex.Matches(input, "mul\((\d{1,3}),(\d{1,3})\)")
-        |> List.ofSeq
-        |> List.map matchToMult
-
-    let dos =
-        Regex.Matches(input, "do\(\)") |> List.ofSeq |> List.map (fun m -> m.Index, Do)
-
-    let donts =
-        Regex.Matches(input, "don't\(\)")
-        |> List.ofSeq
-        |> List.map (fun m -> m.Index, Dont)
+    let mults = parseCommand "mul\((\d{1,3}),(\d{1,3})\)" matchToMult input
+    let dos = parseCommand "do\(\)" (fun _ -> Do) input
+    let donts = parseCommand "don't\(\)" (fun _ -> Dont) input
 
     List.concat [ mults; dos; donts ] |> List.sortBy (fun (index, _) -> index)
 
@@ -40,11 +31,11 @@ let removeDisabledCommands (commands: list<int * Command>) =
     commands
     |> List.fold
         (fun (coms, enabled) item ->
-            match item, enabled with
-            | (_, Mul _), true -> item :: coms, true
-            | (_, Mul _), false -> coms, false
-            | (_, Do), _ -> coms, true
-            | (_, Dont), _ -> coms, false
+            match (snd item), enabled with
+            | (Mul _), true -> item :: coms, true
+            | (Mul _), false -> coms, false
+            | (Do), _ -> coms, true
+            | (Dont), _ -> coms, false
 
         )
         ([], true)
