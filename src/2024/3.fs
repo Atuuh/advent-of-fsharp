@@ -25,28 +25,28 @@ let getCommands input =
     let dos = parseCommand "do\(\)" (fun _ -> Do) input
     let donts = parseCommand "don't\(\)" (fun _ -> Dont) input
 
-    List.concat [ mults; dos; donts ] |> List.sortBy (fun (index, _) -> index)
+    List.concat [ mults; dos; donts ]
+    |> List.sortBy (fun (index, _) -> index)
+    |> List.map snd
 
-let removeDisabledCommands (commands: list<int * Command>) =
+let removeDisabledCommands (commands: Command list) =
     commands
     |> List.fold
         (fun (coms, enabled) item ->
-            match (snd item), enabled with
-            | (Mul _), true -> item :: coms, true
-            | (Mul _), false -> coms, false
-            | (Do), _ -> coms, true
-            | (Dont), _ -> coms, false
-
-        )
+            match item, enabled with
+            | Mul _, true -> item :: coms, true
+            | Mul _, false -> coms, false
+            | Do, _ -> coms, true
+            | Dont, _ -> coms, false)
         ([], true)
     |> fst
 
 let getMulAnswers commands =
     commands
     |> List.fold
-        (fun acc (x, y) ->
+        (fun acc command ->
             acc
-            + match y with
+            + match command with
               | Mul(a, b) -> a * b
               | _ -> 0)
         0
