@@ -9,7 +9,8 @@ let split (separator: char) (value: string) =
     |> Seq.toList
 
 let splitEmpty (value: string) =
-    value.ToCharArray() |> Seq.map (fun x -> x.ToString()) |> Seq.toList
+    value |> Seq.toList |> List.map (fun x -> x.ToString())
+// value.ToCharArray() |> Seq.map (fun x -> x.ToString()) |> Seq.toList
 
 let contains (substring: string) (value: string) = value.Contains(substring)
 

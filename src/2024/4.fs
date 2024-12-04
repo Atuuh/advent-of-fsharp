@@ -34,7 +34,8 @@ let isPointInGrid grid point =
     let height = List.length grid
     let width = List.length (List.head grid)
 
-    let result = point.X >= 0 && point.X < width && point.Y >= 0 && point.Y < height
+    let result =
+        point.X >= 0 && point.X < width - 1 && point.Y >= 0 && point.Y < height - 1
 
     result
 
@@ -73,7 +74,12 @@ let getPoints grid direction length startingPosition =
         ([])
     |> List.rev
 
-let getItem grid { X = x; Y = y } = grid |> List.item y |> List.item x
+let getItem grid { X = x; Y = y } =
+    try
+        grid |> List.item y |> List.item x
+    with :? System.ArgumentException ->
+        printfn "Done fucked up, %i,%i" x y
+        failwith "Bye"
 
 // let grid: string list list =
 //     [ [ "A"; "B"; "C" ]; [ "D"; "E"; "F" ]; [ "G"; "H"; "I" ] ]
@@ -95,13 +101,12 @@ let getAllGridItems grid =
 
 let allDirections = [ N; NE; E; SE; S; SW; W; NW ]
 
-let getAllMatchingWords grid word =
+let getAllMatchingWords grid directions word =
     grid
     |> getAllGridItems
     |> List.fold
         (fun res (point, value) ->
             if value = "X" then
-                printfn "Checking point {%i, %i}" point.X point.Y
 
                 let words =
                     allDirections
@@ -109,10 +114,36 @@ let getAllMatchingWords grid word =
                     |> List.map (List.map (getItem grid))
                     |> List.map (String.concat "")
 
-                printfn "words = %A" words
 
-                let matchingWords = words |> List.filter ((=) "XMAS")
+                let matchingWords = words |> List.filter ((=) word)
                 List.concat [ matchingWords; res ]
+
+
+            else
+                res)
+        ([])
+
+let getAllMatchingWords2 grid directions word =
+    grid
+    |> getAllGridItems
+    |> List.fold
+        (fun res (point, value) ->
+            if value = "A" then
+
+                let words =
+                    [ NE; SE; SW; NW ]
+                    |> List.map (fun direction -> getPoints grid direction 2 point)
+                    |> List.map (List.map (getItem grid))
+                    |> List.map (String.concat "")
+
+
+                let test [ a; b; c; d ] =
+                    List.contains "AM" [ a; c ]
+                    && List.contains "AS" [ a; c ]
+                    && List.contains "AM" [ b; d ]
+                    && List.contains "AS" [ b; d ]
+
+                test words :: res
 
 
             else
@@ -121,11 +152,30 @@ let getAllMatchingWords grid word =
 
 let private partA input =
     let grid = parseInput input
-    let matchingWords = getAllMatchingWords grid "XMAS"
+    printfn "input\n%A" input
+    printfn "grid\n%s" (grid |> List.head |> String.concat "")
+    let height = List.length grid
+    let width = List.length (List.head grid)
+
+    printfn "Height=%i, Width=%i" height width
+
+    printfn "%A" (List.head grid)
+
+    for j = 0 to 0 do
+        for i = -1 to width + 1 do
+            let point = { X = i; Y = j }
+            printfn "Point (%i,%i) is in grid: %b" point.X point.Y (isPointInGrid grid point)
+
+    let matchingWords = getAllMatchingWords grid allDirections "XMAS"
     printfn "Matching words = %A" matchingWords
     let answer = matchingWords |> List.length
     printfn "Answer: %i" answer
 
-let private partB = ignore
+let private partB input =
+    let grid = parseInput input
+    let matchingWords = getAllMatchingWords2 grid allDirections "XMAS"
+    printfn "Matching words = %A" matchingWords
+    let answer = matchingWords |> List.length
+    printfn "Answer: %i" answer
 
 let solution: Types.Solution = { partA = partA; partB = partB }
