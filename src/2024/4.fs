@@ -32,7 +32,11 @@ let isInGrid grid point =
 let getPoints grid direction length startingPosition =
     let vector = getVectorFromDirection direction
     let points = [ for x in 0 .. length - 1 -> startingPosition |> add (mult vector x) ]
-    if List.forall (isInGrid grid) points then points else []
+
+    if List.forall (isInGrid grid) points then
+        Some points
+    else
+        None
 
 let getItem grid { X = x; Y = y } = grid |> List.item y |> List.item x
 
@@ -55,10 +59,11 @@ let getAllXmas grid =
                 let words =
                     allDirections
                     |> List.map (fun direction -> getPoints grid direction 4 point)
-                    |> List.map (List.map (getItem grid))
-                    |> List.map (String.concat "")
+                    |> List.map (Option.map (List.map (getItem grid) >> String.concat ""))
 
-                let passingWords = words |> List.filter ((=) "XMAS") |> List.length
+                let passingWords =
+                    words |> List.choose id |> List.filter ((=) "XMAS") |> List.length
+
                 passingWords + acc
             else
                 acc)
