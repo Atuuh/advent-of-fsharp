@@ -67,15 +67,11 @@ let getAllXmas grid =
                     |> List.map (List.map (getItem grid))
                     |> List.map (String.concat "")
 
-                printfn "words %A" words
-
                 let passingWords = words |> List.filter ((=) "XMAS") |> List.length
-                printfn "point (%i, %i) adding %i passing words" point.X point.Y passingWords
                 passingWords + acc
             else
                 acc)
         0
-
 
 // a b
 //  A
