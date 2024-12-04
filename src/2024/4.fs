@@ -35,7 +35,7 @@ let isPointInGrid grid point =
     let width = List.length (List.head grid)
 
     let result =
-        point.X >= 0 && point.X < width - 1 && point.Y >= 0 && point.Y < height - 1
+        point.X >= 0 && point.X < width  && point.Y >= 0 && point.Y < height 
 
     result
 
@@ -80,16 +80,6 @@ let getItem grid { X = x; Y = y } =
     with :? System.ArgumentException ->
         printfn "Done fucked up, %i,%i" x y
         failwith "Bye"
-
-// let grid: string list list =
-//     [ [ "A"; "B"; "C" ]; [ "D"; "E"; "F" ]; [ "G"; "H"; "I" ] ]
-
-// let startingPosition = { X = 1; Y = 1 }
-// let points = getPoints grid N 1 startingPosition
-// let text = points |> List.map (getItem grid)
-// printfn "points test: %A" points
-// printfn "text=%A" text
-
 
 let parseInput input =
     input |> String.split '\n' |> List.map String.splitEmpty
@@ -136,38 +126,27 @@ let getAllMatchingWords2 grid directions word =
                     |> List.map (List.map (getItem grid))
                     |> List.map (String.concat "")
 
+                let [a;b;c;d] = words
 
-                let test [ a; b; c; d ] =
-                    List.contains "AM" [ a; c ]
-                    && List.contains "AS" [ a; c ]
-                    && List.contains "AM" [ b; d ]
-                    && List.contains "AS" [ b; d ]
 
-                test words :: res
+                let test t = List.contains "AM" t && List.contains "AS" t
+                let passes = test [a;c] && test [b;d]
+
+                if passes then
+                    printfn "a=%s b=%s c=%s d=%s" a b c d
+                    printfn "\n%c %c\n %s \n%c %c" (d.Chars 1) (a.Chars 1) "A" (c.Chars 1) (b.Chars 1) 
+
+                passes :: res
 
 
             else
                 res)
         ([])
+        |> List.filter ((=) true)
 
 let private partA input =
     let grid = parseInput input
-    printfn "input\n%A" input
-    printfn "grid\n%s" (grid |> List.head |> String.concat "")
-    let height = List.length grid
-    let width = List.length (List.head grid)
-
-    printfn "Height=%i, Width=%i" height width
-
-    printfn "%A" (List.head grid)
-
-    for j = 0 to 0 do
-        for i = -1 to width + 1 do
-            let point = { X = i; Y = j }
-            printfn "Point (%i,%i) is in grid: %b" point.X point.Y (isPointInGrid grid point)
-
     let matchingWords = getAllMatchingWords grid allDirections "XMAS"
-    printfn "Matching words = %A" matchingWords
     let answer = matchingWords |> List.length
     printfn "Answer: %i" answer
 
