@@ -8,19 +8,11 @@ let add (first: Point) (second: Point) =
     { X = first.X + second.X
       Y = first.Y + second.Y }
 
-type CardinalDirections =
-    | N
-    | E
-    | S
-    | W
+let mult (point) amount =
+    { X = point.X * amount
+      Y = point.Y * amount }
 
-type IntercardinalDirections =
-    | NE
-    | SE
-    | SW
-    | NW
-
-type CompassDirections =
+type Directions =
     | N
     | E
     | S
@@ -30,56 +22,28 @@ type CompassDirections =
     | SW
     | NW
 
-let isPointInGrid grid point =
+let getVectorFromDirection direction =
+    match direction with
+    | N -> { X = 0; Y = -1 }
+    | NE -> { X = 1; Y = -1 }
+    | E -> { X = 1; Y = 0 }
+    | SE -> { X = 1; Y = 1 }
+    | S -> { X = 0; Y = 1 }
+    | SW -> { X = -1; Y = 1 }
+    | W -> { X = -1; Y = 0 }
+    | NW -> { X = -1; Y = -1 }
+
+let isInGrid grid point =
     let height = List.length grid
     let width = List.length (List.head grid)
-
-    let result =
-        point.X >= 0 && point.X < width  && point.Y >= 0 && point.Y < height 
-
-    result
+    point.X >= 0 && point.X < width && point.Y >= 0 && point.Y < height
 
 let getPoints grid direction length startingPosition =
-    [ 0 .. length - 1 ]
-    |> List.fold
-        (fun (res) item ->
-            let point =
-                match direction with
-                | N ->
-                    { X = startingPosition.X
-                      Y = startingPosition.Y - item }
-                | NE ->
-                    { X = startingPosition.X + item
-                      Y = startingPosition.Y - item }
-                | E ->
-                    { X = startingPosition.X + item
-                      Y = startingPosition.Y }
-                | SE ->
-                    { X = startingPosition.X + item
-                      Y = startingPosition.Y + item }
-                | S ->
-                    { X = startingPosition.X
-                      Y = startingPosition.Y + item }
-                | SW ->
-                    { X = startingPosition.X - item
-                      Y = startingPosition.Y + item }
-                | W ->
-                    { X = startingPosition.X - item
-                      Y = startingPosition.Y }
-                | NW ->
-                    { X = startingPosition.X - item
-                      Y = startingPosition.Y - item }
+    let vector = getVectorFromDirection direction
+    let points = [ for x in 0 .. length - 1 -> startingPosition |> add (mult vector x) ]
+    if List.forall (isInGrid grid) points then points else []
 
-            if isPointInGrid grid point then point :: res else [])
-        ([])
-    |> List.rev
-
-let getItem grid { X = x; Y = y } =
-    try
-        grid |> List.item y |> List.item x
-    with :? System.ArgumentException ->
-        printfn "Done fucked up, %i,%i" x y
-        failwith "Bye"
+let getItem grid { X = x; Y = y } = grid |> List.item y |> List.item x
 
 let parseInput input =
     input |> String.split '\n' |> List.map String.splitEmpty
@@ -91,70 +55,59 @@ let getAllGridItems grid =
 
 let allDirections = [ N; NE; E; SE; S; SW; W; NW ]
 
-let getAllMatchingWords grid directions word =
+let getAllXmas grid =
     grid
     |> getAllGridItems
     |> List.fold
-        (fun res (point, value) ->
+        (fun acc (point, value) ->
             if value = "X" then
-
                 let words =
                     allDirections
                     |> List.map (fun direction -> getPoints grid direction 4 point)
                     |> List.map (List.map (getItem grid))
                     |> List.map (String.concat "")
 
+                printfn "words %A" words
 
-                let matchingWords = words |> List.filter ((=) word)
-                List.concat [ matchingWords; res ]
-
-
+                let passingWords = words |> List.filter ((=) "XMAS") |> List.length
+                printfn "point (%i, %i) adding %i passing words" point.X point.Y passingWords
+                passingWords + acc
             else
-                res)
-        ([])
-
-let getAllMatchingWords2 grid directions word =
-    grid
-    |> getAllGridItems
-    |> List.fold
-        (fun res (point, value) ->
-            if value = "A" then
-
-                let words =
-                    [ NE; SE; SW; NW ]
-                    |> List.map (fun direction -> getPoints grid direction 2 point)
-                    |> List.map (List.map (getItem grid))
-                    |> List.map (String.concat "")
-
-                let [a;b;c;d] = words
+                acc)
+        0
 
 
-                let test t = List.contains "AM" t && List.contains "AS" t
-                let passes = test [a;c] && test [b;d]
+// a b
+//  A
+// c d
+let hasCrossPattern (grid: string list list) point =
+    let items =
+        [ NW; NE; SW; SE ]
+        |> List.map (fun direction -> getItem grid (add point (getVectorFromDirection direction)))
 
-                if passes then
-                    printfn "a=%s b=%s c=%s d=%s" a b c d
-                    printfn "\n%c %c\n %s \n%c %c" (d.Chars 1) (a.Chars 1) "A" (c.Chars 1) (b.Chars 1) 
-
-                passes :: res
-
-
-            else
-                res)
-        ([])
-        |> List.filter ((=) true)
+    match items with
+    | [ a; b; c; d ] -> [ a + d; b + c ] |> List.forall (fun value -> value = "SM" || value = "MS")
+    | _ -> failwith "Impossible"
 
 let private partA input =
     let grid = parseInput input
-    let matchingWords = getAllMatchingWords grid allDirections "XMAS"
-    let answer = matchingWords |> List.length
+    let answer = getAllXmas grid
     printfn "Answer: %i" answer
 
 let private partB input =
     let grid = parseInput input
-    let matchingWords = getAllMatchingWords2 grid allDirections "XMAS"
-    printfn "Matching words = %A" matchingWords
-    let answer = matchingWords |> List.length
+    let height = List.length grid
+    let width = List.length (List.head grid)
+
+    let isCrossPatternCenter point =
+        (getItem grid point = "A") && (hasCrossPattern grid point)
+
+    let answer =
+        [ for j in 1 .. height - 2 do
+              for i in 1 .. width - 2 -> { X = i; Y = j } ]
+        |> List.filter (isCrossPatternCenter)
+        |> List.length
+
     printfn "Answer: %i" answer
 
 let solution: Types.Solution = { partA = partA; partB = partB }
