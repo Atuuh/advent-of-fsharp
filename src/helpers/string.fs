@@ -8,6 +8,10 @@ let split (separator: char) (value: string) =
     value.Split(separator, System.StringSplitOptions.RemoveEmptyEntries)
     |> Seq.toList
 
+let splits (separator: string) (value: string) =
+    value.Split([| separator |], System.StringSplitOptions.RemoveEmptyEntries)
+    |> Seq.toList
+
 let splitEmpty (value: string) =
     value |> Seq.toList |> List.map (fun x -> x.ToString())
 // value.ToCharArray() |> Seq.map (fun x -> x.ToString()) |> Seq.toList
