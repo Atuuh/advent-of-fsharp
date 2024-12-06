@@ -9,3 +9,5 @@ let add (first: Point) (second: Point) =
 let mult (point) amount =
     { X = point.X * amount
       Y = point.Y * amount }
+
+let pointEqual a b = a.X = b.X && a.Y = b.Y

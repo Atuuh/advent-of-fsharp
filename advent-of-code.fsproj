@@ -6,7 +6,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="types.fs" />
-    <Compile Include="src\helpers\**\*.fs" />
+    <Compile Include="src\helpers\tuple.fs" />
+    <Compile Include="src\helpers\string.fs" />
+    <Compile Include="src\helpers\seq.fs" />
+    <Compile Include="src\helpers\list.fs" />
+    <Compile Include="src\helpers\int.fs" />
+    <Compile Include="src\helpers\input.fs" />
+    <Compile Include="src\helpers\point.fs" />
+    <Compile Include="src\helpers\direction.fs" />
+    <Compile Include="src\helpers\grid.fs" />
     <Compile Include="src\2016\**\*.fs" />
     <Compile Include="src\2023\**\*.fs" />
     <Compile Include="src\2024\**\*.fs" />
