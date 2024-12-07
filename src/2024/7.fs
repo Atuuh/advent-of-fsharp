@@ -13,36 +13,27 @@ let parseInput input =
             | _ -> failwith "Parsing input failed")
         '\n'
 
-let flip f a b = f b a
-
-let rec power n x =
-    if n = 0 then x else power (n - 1) (x * x)
-
-let getAllOptions a b = [ a * b; a + b ]
-
-let getAllOptions2 a b =
-    [ a * b; a + b; b.ToString() + a.ToString() |> double ]
-
-let getAllEquations getOptionsFn numbers =
+let getAllEquations getOptionsFn numbers target =
     let rec loop remainingNumbers results =
         match remainingNumbers, results with
         | next :: tail, [] -> loop tail ([ next ])
-        | [], _ -> results
-        | next :: tail, _ -> loop tail (results |> List.collect (getOptionsFn next))
+        | [], _ -> List.exists ((=) target) results
+        | next :: tail, _ ->
+            if next > target then
+                false
+            else
+                loop tail (results |> List.collect (getOptionsFn next))
 
     loop numbers []
 
 let private partA input =
     let equations = parseInput input
+    let getOptions a b = [ a * b; a + b ]
 
     let answer =
         equations
-        |> List.choose (fun (result, numbers) ->
-            let allResults = getAllEquations getAllOptions numbers
-            let doAnyResultsMatch = allResults |> List.exists ((=) result)
-
-            if doAnyResultsMatch then Some result else None)
-        |> List.sum
+        |> List.filter (fun (target, numbers) -> getAllEquations getOptions numbers target)
+        |> List.sumBy fst
         |> uint64
 
     printfn "Answer: %i" answer
@@ -50,16 +41,17 @@ let private partA input =
 let private partB input =
     let equations = parseInput input
 
+    let getOptions a b =
+        [ a * b; a + b; b.ToString() + a.ToString() |> double ]
+
     let answer =
         equations
-        |> List.choose (fun (result, numbers) ->
-            let allResults = getAllEquations getAllOptions2 numbers
-            let doAnyResultsMatch = allResults |> List.exists ((=) result)
-
-            if doAnyResultsMatch then Some result else None)
-        |> List.sum
+        |> List.filter (fun (target, numbers) -> getAllEquations getOptions numbers target)
+        |> List.sumBy fst
         |> uint64
 
     printfn "Answer: %i" answer
+
+    printfn "Answer: %i" 0
 
 let solution: Types.Solution = { partA = partA; partB = partB }
