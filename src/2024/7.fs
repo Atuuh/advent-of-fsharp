@@ -15,21 +15,12 @@ let parseInput input =
 
 let flip f a b = f b a
 
-open System
-
 let rec power n x =
     if n = 0 then x else power (n - 1) (x * x)
 
-
-
-let getAllOptions a b =
-    // let concat = a.ToString() + b.ToString() |> uint64
-    // printfn "Concat is %i" concat
-    [ a * b; a + b ]
+let getAllOptions a b = [ a * b; a + b ]
 
 let getAllOptions2 a b =
-    // let concat = a.ToString() + b.ToString() |> uint64
-    // printfn "Concat is %i" concat
     [ a * b; a + b; b.ToString() + a.ToString() |> double ]
 
 let getAllEquations getOptionsFn numbers =
