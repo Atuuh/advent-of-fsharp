@@ -4,7 +4,6 @@ open AOC
 open AOC.Point
 open AOC.Direction
 open AOC.Grid
-open System.Diagnostics
 
 type Cell =
     | Empty
@@ -41,10 +40,7 @@ type Patrol =
     | Loop of (Point * Direction) Set
     | Exits of (Point * Direction) Set
 
-let isLoop patrol =
-    match patrol with
-    | Loop _ -> true
-    | Exits _ -> false
+let isLoop (patrol: Patrol) = patrol.IsLoop
 
 let patrol startingPosition startingDirection grid =
     let rec loop currentPosition currentDirection (visited: (Point * Direction) Set) =
