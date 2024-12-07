@@ -24,3 +24,6 @@ let tryGetItem grid point =
         grid |> List.item point.Y |> List.item point.X |> Some
     with _ ->
         None
+
+let height grid = List.length grid
+let width grid = grid |> List.item 0 |> List.length

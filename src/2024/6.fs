@@ -4,6 +4,7 @@ open AOC
 open AOC.Point
 open AOC.Direction
 open AOC.Grid
+open System.Diagnostics
 
 type Cell =
     | Empty
@@ -26,54 +27,59 @@ let rotateGuard guard =
     | W -> N
     | _ -> failwith "Guard pretending he can do diagonals"
 
-let step grid (guardDirection, guardPosition) =
+let step grid guardDirection guardPosition =
     let nextPosition = add guardPosition (getVectorFromDirection (guardDirection))
 
     match tryGetItem grid nextPosition with
     | Some Obstacle ->
         let rotatedGuard = rotateGuard guardDirection
-        Some((rotatedGuard, guardPosition), (rotatedGuard, guardPosition))
-    | Some _ -> Some((guardDirection, nextPosition), (guardDirection, nextPosition))
+        Some(rotatedGuard, guardPosition)
+    | Some _ -> Some(guardDirection, nextPosition)
     | None -> None
 
-let getAllSteps guardPosition guardDirection grid =
-    (guardDirection, guardPosition) |> Seq.unfold (step grid)
+type Patrol =
+    | Loop of Point list
+    | Exits of Point list
+
+let isLoop patrol =
+    match patrol with
+    | Loop _ -> true
+    | Exits _ -> false
+
+let patrol startingPosition startingDirection grid =
+    let rec loop currentPosition currentDirection (visited: (Point * Direction) Set) =
+        match step grid currentDirection currentPosition, visited with
+        | Some(direction, position), visited when Set.contains (position, direction) visited ->
+            Loop(Set.map fst visited |> Set.toList)
+        | Some(direction, position), _ -> loop position direction (visited.Add(position, direction))
+        | None, _ -> Exits(Set.map fst visited |> Set.toList)
+
+    loop startingPosition startingDirection (Set.singleton (startingPosition, startingDirection))
+
+let getAllSteps patrol =
+    match patrol with
+    | Loop xs -> xs
+    | Exits xs -> xs
 
 let private partA input =
     let grid, guardPosition, guardDirection = parseInput input
-    let allSteps = getAllSteps guardPosition guardDirection grid
-    let answer = allSteps |> Seq.map snd |> Seq.distinct |> Seq.length
+    let allSteps = patrol guardPosition guardDirection grid |> getAllSteps
+    let answer = allSteps |> Seq.length
     printfn "Answer: %i" answer
 
 let private partB input =
     let grid, guardPosition, guardDirection = parseInput input
 
     let originalPath =
-        getAllSteps guardPosition guardDirection grid
-        |> Seq.map snd
-        |> Seq.distinct
+        patrol guardPosition guardDirection grid
+        |> getAllSteps
         |> Seq.filter ((pointEqual guardPosition) >> not)
 
-    let count = 10000
-
-    let potentialNewGrids =
-        originalPath
-        |> Seq.map (fun point ->
-            match Day4.getItem grid point with
-            // | Empty, pos when not (pointEqual pos guardPosition) -> set2d grid point Obstacle |> Some
-            | Empty -> set2d grid point Obstacle |> Some
-            | _ -> None)
-
-    let actualNewGrids = potentialNewGrids |> Seq.choose id
+    let newGrids = originalPath |> Seq.map (fun point -> set2d grid point Obstacle)
 
     let answer =
-        actualNewGrids
-        |> Seq.filter (
-            getAllSteps guardPosition guardDirection
-            >> Seq.truncate count
-            >> Seq.length
-            >> ((=) count)
-        )
+        newGrids
+        |> Seq.filter (patrol guardPosition guardDirection >> isLoop)
         |> Seq.length
 
     printfn "Answer: %i" answer
