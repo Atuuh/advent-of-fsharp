@@ -79,7 +79,10 @@ let private partB input =
 
     let answer =
         newGrids
-        |> Seq.filter (patrol guardPosition guardDirection >> isLoop)
+        |> Seq.map (fun grid -> async { return patrol guardPosition guardDirection grid |> isLoop })
+        |> Async.Parallel
+        |> Async.RunSynchronously
+        |> Seq.filter (id)
         |> Seq.length
 
     printfn "Answer: %i" answer
