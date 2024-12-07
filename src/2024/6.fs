@@ -38,8 +38,8 @@ let step grid guardDirection guardPosition =
     | None -> None
 
 type Patrol =
-    | Loop of Point list
-    | Exits of Point list
+    | Loop of (Point * Direction) Set
+    | Exits of (Point * Direction) Set
 
 let isLoop patrol =
     match patrol with
@@ -49,10 +49,9 @@ let isLoop patrol =
 let patrol startingPosition startingDirection grid =
     let rec loop currentPosition currentDirection (visited: (Point * Direction) Set) =
         match step grid currentDirection currentPosition, visited with
-        | Some(direction, position), visited when Set.contains (position, direction) visited ->
-            Loop(Set.map fst visited |> Set.toList)
+        | Some(direction, position), visited when Set.contains (position, direction) visited -> Loop(visited)
         | Some(direction, position), _ -> loop position direction (visited.Add(position, direction))
-        | None, _ -> Exits(Set.map fst visited |> Set.toList)
+        | None, _ -> Exits(visited)
 
     loop startingPosition startingDirection (Set.singleton (startingPosition, startingDirection))
 
@@ -73,6 +72,7 @@ let private partB input =
     let originalPath =
         patrol guardPosition guardDirection grid
         |> getAllSteps
+        |> Seq.map fst
         |> Seq.filter ((pointEqual guardPosition) >> not)
 
     let newGrids = originalPath |> Seq.map (fun point -> set2d grid point Obstacle)
