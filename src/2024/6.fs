@@ -36,27 +36,34 @@ let step grid guardDirection guardPosition =
     | Some _ -> Some(guardDirection, nextPosition)
     | None -> None
 
+open System.Collections.Generic
+
 type Patrol =
-    | Loop of (Point * Direction) Set
-    | Exits of (Point * Direction) Set
+    | Loop of HashSet<Point * Direction>
+    | Exits of HashSet<Point * Direction>
 
 let isLoop (patrol: Patrol) = patrol.IsLoop
 
 let patrol startingPosition startingDirection grid =
-    let rec loop currentPosition currentDirection (visited: (Point * Direction) Set) =
+    let visited = HashSet<Point * Direction>()
+    visited.Add(startingPosition, startingDirection) |> ignore
+
+    let rec loop currentPosition currentDirection =
         match step grid currentDirection currentPosition, visited with
-        | Some(direction, position), visited when Set.contains (position, direction) visited -> Loop visited
-        | Some(direction, position), _ -> loop position direction (visited.Add(position, direction))
+        | Some(direction, position), visited when visited.Contains(position, direction) -> Loop visited
+        | Some(direction, position), _ ->
+            visited.Add(position, direction) |> ignore
+            loop position direction
         | None, _ -> Exits visited
 
-    loop startingPosition startingDirection (Set.singleton (startingPosition, startingDirection))
+    loop startingPosition startingDirection
 
 let getAllSteps patrol =
     match patrol with
     | Loop xs -> xs
     | Exits xs -> xs
-    |> Set.map fst
     |> seq
+    |> Seq.map fst
 
 let private partA input =
     let grid, guardPosition, guardDirection = parseInput input
