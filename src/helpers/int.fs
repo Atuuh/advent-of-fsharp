@@ -7,3 +7,12 @@ let tryParse (s: string) =
         Some(intValue)
     else
         None
+
+let inline factorise value =
+    let rec loop x i results =
+        match x with
+        | x when x < 2 -> results
+        | x when x % i = 0 -> loop (x / i) (i) (i :: results)
+        | _ -> loop x (i + 1) results
+
+    loop value 2 []

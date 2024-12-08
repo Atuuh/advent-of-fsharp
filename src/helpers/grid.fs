@@ -13,6 +13,10 @@ let find predicate (grid: 'a Grid) =
 
 let map2d mapping grid = grid |> List.map (List.map mapping)
 
+let mapi2d mapping grid =
+    grid
+    |> List.mapi (fun y row -> row |> List.mapi (fun x item -> mapping x y item))
+
 let set2d (grid: 'a list list) { X = x; Y = y } (value: 'a) : 'a list list =
     List.concat
         [ grid[.. y - 1]
@@ -26,4 +30,11 @@ let tryGetItem grid point =
         None
 
 let height grid = List.length grid
+
 let width grid = grid |> List.item 0 |> List.length
+
+let withinBounds grid point =
+    point.X >= 0
+    && point.X < (width grid)
+    && point.Y >= 0
+    && point.Y < (height grid)

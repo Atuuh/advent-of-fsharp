@@ -2,6 +2,7 @@ module AOC.Year2024.Day4
 
 open AOC
 open AOC.Point
+open AOC.Grid
 
 type Directions =
     | N
@@ -24,16 +25,11 @@ let getVectorFromDirection direction =
     | W -> { X = -1; Y = 0 }
     | NW -> { X = -1; Y = -1 }
 
-let isInGrid grid point =
-    let height = List.length grid
-    let width = List.length (List.head grid)
-    point.X >= 0 && point.X < width && point.Y >= 0 && point.Y < height
-
 let getPoints grid direction length startingPosition =
     let vector = getVectorFromDirection direction
     let points = [ for x in 0 .. length - 1 -> startingPosition |> add (mult vector x) ]
 
-    if List.forall (isInGrid grid) points then
+    if List.forall (withinBounds grid) points then
         Some points
     else
         None
