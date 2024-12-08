@@ -16,3 +16,22 @@ let inline factorise value =
         | _ -> loop x (i + 1) results
 
     loop value 2 []
+
+let inline lowestCommonMultiple xs =
+    let factors = xs |> List.map factorise
+    let distinctFactors = factors |> List.flat |> List.distinct
+    let f = factors |> List.map (fun facts -> facts |> List.countBy id |> Map.ofList)
+
+    distinctFactors
+    |> List.fold
+        (fun total prime ->
+            let maxCount =
+                f
+                |> List.map (fun ys ->
+                    match Map.tryFind prime ys with
+                    | Some x -> x
+                    | None -> 0)
+                |> List.max
+
+            pown prime maxCount * total)
+        1
