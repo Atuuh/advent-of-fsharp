@@ -1,157 +1,107 @@
 module AOC.Year2024.Day9
 
 open AOC
+open AOC.Tuple
 
-type X =
-    | File of id: int * size: int
-    | Empty of position: int * size: int
+type File = int * int * int
+type Empty = int * int
 
-let isFile (block: X) = block.IsFile
-
-// Take a size of space to fill and a list of files.
-// Return a list of files to fill the space with and the remaining list of files
-let replaceEmpty size files =
+let replaceEmpty ((fullSize, pos): Empty) (files: File list) =
     files
     |> List.fold
-        (fun (resultFiles, remainingSize, remainingFiles) file ->
-            match file with
-            | File _ when remainingSize = 0 -> resultFiles, 0, file :: remainingFiles
-            | File(id, size) when size < remainingSize ->
-                File(id, size) :: resultFiles, remainingSize - size, remainingFiles
-            | File(id, size) when size > remainingSize ->
-                File(id, remainingSize) :: resultFiles, 0, File(id, size - remainingSize) :: remainingFiles
-            | File(id, size) when size = remainingSize -> File(id, remainingSize) :: resultFiles, 0, remainingFiles
-            | _ -> failwith "Called replaceEmpty with some dumb shit")
-        ([], size, [])
+        (fun (resultFiles, remainingSize, remainingFiles) (id, size, filePos) ->
+            if remainingSize = 0 then
+                resultFiles, 0, File(id, size, filePos) :: remainingFiles
+            elif size < remainingSize then
+                File(id, size, fullSize - remainingSize + pos) :: resultFiles, remainingSize - size, remainingFiles
+            elif size > remainingSize then
+                File(id, remainingSize, fullSize - remainingSize + pos) :: resultFiles,
+                0,
+                File(id, size - remainingSize, filePos) :: remainingFiles
+            else
+                File(id, remainingSize, fullSize - remainingSize + pos) :: resultFiles, 0, remainingFiles)
+        ([], fullSize, [])
     |> (fun (a, _, c) -> a, List.rev c)
 
-let blocksToStuff blocks =
-    blocks
-    |> List.mapi (fun i item ->
-        match item with
-        | File(id, size) ->
-            [ for _ in i .. i + size - 1 do
-                  string id ]
-        | Empty(pos, size) ->
-            [ for _ in i .. i + size - 1 do
-                  "." ])
-    |> List.flat
+let inline fileChecksum (id: int, size: int) (position: uint64) : uint64 =
+    seq {
+        for i in position .. position + (uint64 size) - 1UL do
+            i
+    }
+    |> Seq.sum
+    |> (*) (uint64 id)
 
-let printBlocks blocks msg =
-    blocksToStuff blocks |> String.concat " " |> printfn "%s: [ %s ]" msg
+let checksum (files: File list) =
+    files
+    |> List.fold
+        (fun (total, blockPosition) (id, size, pos) ->
+            total + fileChecksum (id, size) (uint64 blockPosition), blockPosition + size)
+        (0UL, 0)
+    |> fst
 
-let private partA input =
+let parseInput input =
     let paddedInput = if String.length input % 2 = 0 then input else input + "0"
-    printfn "oInput: %s\npInput: %s" input paddedInput
 
-    let fileSystem =
+    let (filesReversed: File list), (emptiesReversed: Empty list), _, _ =
         paddedInput
         |> String.splitEmpty
         |> List.fold
-            (fun (s, i) item ->
+            (fun (files, empties, i, diskPosition) item ->
                 if i % 2 = 0 then
-                    File(i / 2, int item) :: s, i + 1
+                    File(i / 2, int item, diskPosition) :: files, empties, i + 1, diskPosition + int item
                 else
-                    Empty(i, int item) :: s, i + 1)
-            ([], 0)
-        |> fst
-        |> List.rev
+                    files, Empty(int item, diskPosition) :: empties, i + 1, diskPosition + int item)
+            ([], [], 0, 0)
 
-    // printfn "Filesystem %A" fileSystem
-    printBlocks fileSystem "File System"
-    let filelength = blocksToStuff fileSystem |> List.filter ((=) ".") |> List.length
-    printfn "filelength: %i" filelength
+    let files = filesReversed |> List.rev
+    let emptys = emptiesReversed |> List.rev
+    files, emptys
 
-    let files = fileSystem |> List.filter isFile
-    let emptys = fileSystem |> List.filter (isFile >> not)
-
-    // For each Empty, replace it with enough files to fit
+let blockDefrag (files: File list) (empties: Empty list) : File list =
     let defragged =
-        List.zip files emptys
+        List.zip files empties
         |> List.fold
-            (fun (s, remainingFiles) (a, b) ->
-                match b with
-                | Empty(pos, size) ->
-                    let insertFiles, remaining = replaceEmpty size remainingFiles
-                    printfn "Insert files %A, remaining files %A" insertFiles (List.truncate 5 remaining)
-                    List.concat [ List.ofSeq insertFiles; [ a ]; s ], remaining
-                | _ -> failwith "We filtered this, right?")
+            (fun (s, remainingFiles) (a, emptySize) ->
+                let insertFiles, remaining = replaceEmpty emptySize remainingFiles
+                List.concat [ List.ofSeq insertFiles; [ a ]; s ], remaining)
             ([], List.rev files)
         |> fst
         |> List.rev
 
+    let totalFileSize = files |> List.sumBy snd3
 
-    let totalFileSize =
-        files
-        |> List.fold
-            (fun size item ->
-                match item with
-                | File(id, s) -> size + s
-                | Empty _ -> size)
-            0
+    defragged
+    |> List.fold
+        (fun (result, totalSize) (id, size, pos) ->
+            if totalSize + size < totalFileSize then
+                File(id, size, pos) :: result, totalSize + size
+            elif totalSize < totalFileSize then
+                File(id, totalFileSize - totalSize, pos) :: result, totalSize + size
+            else
+                result, totalSize)
+        ([], 0)
+    |> fst
+    |> List.rev
 
-    printfn "Total size: %i" totalFileSize
+let private partA input =
+    let files, empties = parseInput input
+    let defragged = blockDefrag files empties
+    let answer = checksum defragged
+    printfn "Answer: %i" answer
 
-    let kept =
-        defragged
-        |> List.fold
-            (fun (result, totalSize) item ->
-                match item with
-                | File(id, size) when totalSize + size < totalFileSize -> item :: result, totalSize + size
-                | File(id, size) when totalSize < totalFileSize ->
-                    File(id, totalFileSize - totalSize) :: result, totalSize + size
-                | File _ -> result, totalSize
-                | Empty _ -> result, totalSize)
-            ([], 0)
-        |> fst
-        |> List.rev
+let fileDefrag files empties =
+    // let rec loop result filesToTry emptiesToTry =
+    //     match filesToTry  with
+    //     | [] -> result
+    //     | (id, size)::tail ->
+    //         let
+    // loop [] (List.rev files) empties
+    files
 
-    // printfn "kept: %A" kept
-    // kept |> Seq.iter (printfn "%A")
-
-    let blocks =
-        kept
-        |> List.mapi (fun i item ->
-            match item with
-            | File(id, size) ->
-                [ for j in i .. i + size - 1 do
-                      uint64 id ])
-        |> List.flat
-
-    // blocks |> List.map string |> String.concat " " |> printfn "Defragged [ %s ]"
-    printBlocks kept "Defragged"
-
-    let getI index size =
-        let length =
-            seq {
-                for i in index .. index + size - 1 do
-                    i
-            }
-            |> Seq.sum
-
-        // printfn "getI pos %i size %i = %i" index size length
-
-        length
-
-    let checksum = blocks |> List.mapi (fun i item -> uint64 i * item) |> List.sum
-    printfn "Dumb checksum: %i" checksum
-
-    let smartChecksum =
-        kept
-        |> Seq.fold
-            (fun (checksum, blockPosition) item ->
-                match item with
-                | File(id, size) ->
-                    // printfn "getI pos %i size %i = %i * fileId %i = %i" blockPosition size part id (part * id)
-                    checksum + uint64 (getI blockPosition size * id), blockPosition + size
-                | Empty(id, size) -> checksum, blockPosition + size)
-            (0UL, 0)
-        |> fst
-
-    printfn "Smart checksum: %i" smartChecksum
-
-    printfn "Answer: %i" checksum
-
-let private partB = ignore
+let private partB input =
+    let files, empties = parseInput input
+    let defragged = fileDefrag files empties
+    let answer = checksum defragged
+    printfn "Answer: %i" answer
 
 let solution: Types.Solution = { partA = partA; partB = partB }
