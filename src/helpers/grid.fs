@@ -1,6 +1,7 @@
 module AOC.Grid
 
 open AOC.Point
+open AOC.Direction
 
 type Grid<'a> = 'a list list
 
@@ -38,3 +39,5 @@ let withinBounds grid point =
     && point.X < (width grid)
     && point.Y >= 0
     && point.Y < (height grid)
+
+let cardinal = [ N; E; S; W ]

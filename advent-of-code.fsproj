@@ -20,4 +20,7 @@
     <Compile Include="src\2024\**\*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharpx.Collections" Version="3.1.0" />
+  </ItemGroup>
 </Project>
